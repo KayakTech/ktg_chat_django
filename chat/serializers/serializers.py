@@ -182,6 +182,7 @@ class ChatRoomResponseSerializer(serializers.ModelSerializer):
         user = request.user
 
         last_n_messages = request.query_params.get('last_n_messages', 1)
+
         participant_id = chat_service.get_chat_client_participant_id(
             room_id=obj.room_id, user_email=user.email)
 
@@ -194,7 +195,7 @@ class ChatRoomResponseSerializer(serializers.ModelSerializer):
             room_id=obj.room_id,
             last_n_messages=last_n_messages,
             participant_id=participant_id,
-            fetch_only=True
+            fetch_only=self.context.get('fetch_only', True)
         )
 
         return RoomResponseSerializer(room_details).data

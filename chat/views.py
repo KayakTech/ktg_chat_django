@@ -110,9 +110,9 @@ class RoomView(BaseFilterParams, BaseView):
             methods=["get"],  permission_classes=[IsAuthenticated])
     def get_room(self, request, pk: UUID = None, *args, **kwargs):
 
-        rooms = chat_service.get_chat_room(pk)
+        room = chat_service.get_chat_room(pk)
         serializer = ChatRoomResponseSerializer(
-            rooms, context=self.get_context())
+            room, context={**self.get_context(), 'fetch_only': False})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
