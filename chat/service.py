@@ -3,7 +3,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from chat.models import ChatRoom
-from chat_sdk.ktg_chat_client import ChatClientConfig, ChatClient
+from chat.chat_sdk.ktg_chat_client import ChatClientConfig, ChatClient
 from django.conf import settings
 from django.db.models import Q
 from uuid import UUID
