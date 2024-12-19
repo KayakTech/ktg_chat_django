@@ -10,6 +10,7 @@ db.sqlite3
 files
 /files
 files/
+repaires
 .sqlite3
 # Distribution / packaging
 .Python
