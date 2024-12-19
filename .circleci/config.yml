@@ -29,7 +29,7 @@ jobs:
       - image: cimg/postgres:14.0
         environment:
           POSTGRES_USER: "postgres"
-          POSTGRES_DB: "ktg_storage"
+          POSTGRES_DB: "ktg_chat_django"
           POSTGRES_PASSWORD: "postgres"
       - image: cimg/redis:6.2.6
 
@@ -38,7 +38,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - ktg_storage-{{ .Branch }}-{{ checksum "requirements.txt"}}
+            - ktg_chat_django-{{ .Branch }}-{{ checksum "requirements.txt"}}
       - run:
           name: Install libraries
           command: |
@@ -47,7 +47,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.cache/pip
-          key: ktg_storage-{{ .Branch }}-{{ checksum "requirements.txt"}}
+          key: ktg_chat_django-{{ .Branch }}-{{ checksum "requirements.txt"}}
 
   build_docker_image:
     resource_class: medium
@@ -65,9 +65,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - ktg_storage-{{ .Branch }}-{{ checksum "requirements.txt"}}
-            - ktg_storage-{{ .Branch }}
-            - ktg_storage
+            - ktg_chat_django-{{ .Branch }}-{{ checksum "requirements.txt"}}
+            - ktg_chat_django-{{ .Branch }}
+            - ktg_chat_django
 
       - run:
           name: Install dependencies
