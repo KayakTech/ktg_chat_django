@@ -37,4 +37,6 @@ class ChatRoom(models.Model):
 
     @property
     def object_type_name(self):
+        if not self.object_type:
+            return
         return self.object_type.capitalize()

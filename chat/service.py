@@ -34,22 +34,26 @@ class ChatService:
         return archived_chats.filter(is_archived=True)
 
     @classmethod
-    def create_chat_room(
-        cls,
-        **kwargs
-    ) -> ChatRoom:
+    def create_chat_room(cls, **kwargs) -> ChatRoom:
 
         created_by = kwargs.pop('created_by')
         original_kwargs = kwargs.copy()
 
         object_id = kwargs.get('object_id')
         participants_data = kwargs.pop('participants', [])
+
+        created_by_info = {
+            'email': created_by.email,
+            'name': created_by.get_full_name() or created_by.email
+        }
+
+        original_kwargs['participants'].append(created_by_info)
+        participants_data.append(created_by_info)
+
         tags = kwargs.get('tags', [])
 
         participant_emails = [p['email']
                               for p in participants_data if 'email' in p]
-
-        participant_emails.append(created_by.email)
 
         existing_chat_room = ChatRoom.objects.filter(
             object_id=object_id,
@@ -58,26 +62,19 @@ class ChatService:
             participants__email__in=participant_emails
         ).distinct().first()
 
-        print('existing_chat_room', existing_chat_room)
-
         if existing_chat_room:
             return existing_chat_room
 
         chat_room = ChatRoom(**kwargs, created_by=created_by)
 
-        with transaction.atomic():
-            chat_room.save()
-            cls.get_or_create_participant(chat_room, participants_data)
-
-        participants_data.append({
-            'email': chat_room.created_by.email,
-            'name': chat_room.created_by.get_full_name() or chat_room.created_by.email
-        })
-
         client_chat_room = chat_client.create_room(original_kwargs)
 
         chat_room.room_id = client_chat_room.get('id', None)
-        chat_room.save(update_fields=['room_id'])
+
+        with transaction.atomic():
+            chat_room.save()
+
+            cls.get_or_create_participant(chat_room, participants_data)
 
         return chat_room
 
@@ -137,25 +134,19 @@ class ChatService:
 
         participants = update_data.pop('participants', None)
 
-        # for participant in participants:
-        #     user = get_user_model().objects.get(id=participant['id'])
-        #     participant['email'] = user.email
-
-        # participant_ids = [participant.pop(
-        #     'id') for participant in participants] if participants else []
-
         for key, value in update_data.items():
             setattr(chat, key, value)
 
         if participants:
-
             cls.get_or_create_participant(chat, participants)
 
         update_data['participants'] = participants
 
-        chat_client.update_room(
-            room_id=chat.room_id, data=update_data
-        )
+        with transaction.atomic():
+            chat_client.update_room(
+                room_id=chat.room_id, data=update_data
+            )
+            chat.save()
 
         return chat
 
@@ -201,6 +192,9 @@ class ChatService:
         chat.participants.remove(*participants)
         chat.save()
 
+        if not chat.participants.exists():
+            chat.delete()
+
         return chat
 
     @classmethod
@@ -237,3 +231,12 @@ class ChatService:
         if not participant:
             return
         return participant.get('id')
+
+    @classmethod
+    def get_chat_client_room_id(
+        cls, id: UUID
+    ) -> ChatRoom:
+
+        chat = cls.get_chat_room(id)
+
+        return chat.room_id or id

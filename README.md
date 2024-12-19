@@ -1,13 +1,13 @@
 ##
 
-# `ktg_storage` Installation & Usage
+# `ktg_chat_django` Installation & Usage
 
 ## Installation
 
 To install or upgrade the latest version:
 
 ```bash
-pip install git+https://github.com/KayakTech/ktg_storage.git
+pip install git+https://github.com/KayakTech/ktg_chat_django.git
 ```
 
 ### Specific Branch Installation
@@ -15,14 +15,14 @@ pip install git+https://github.com/KayakTech/ktg_storage.git
 To install from a specific branch:
 
 ```bash
-pip install git+https://github.com/KayakTech/ktg_storage.git@branch_name
+pip install git+https://github.com/KayakTech/ktg_chat_django.git@branch_name
 
 ```
 
 # To Uninstall
 
 ```bash
-pip uninstall ktg_storage
+pip uninstall ktg_chat_django
 ```
 
 ## Usage
@@ -34,25 +34,25 @@ from ktg_storage.models import Storage
 
 # THIS SEEETING MUST BE IN THE settings.py file
 
-AWS_ACCESS_KEY_ID = "q4f24ebdtbe'wrg"
-AWS_SECRET_ACCESS_KEY = '2423f3g34422'
-AWS_S3_REGION_NAME = "eu-west-3"
-AWS_STORAGE_BUCKET_NAME = name_of_bucket
-AWS_DEFAULT_ACL='public-read'
-AWS_PRESIGNED_EXPIRY = 10
-FILE_MAX_SIZE = 10000
-ALLOW_AUTHENTICATION = True
-FILE_UPLOAD_STORAGE =  s3
-MEDIA_LOCATION "media"
-APP_DOMAIN = "localhost"
-IS_USING_LOCAL_STORAGE = FILE_UPLOAD_STORAGE == "local"
-FILE_MAX_SIZE = 1024
-FILE_UPLOAD_STORAGE =s3
-IS_USING_LOCAL_STORAGE = FILE_UPLOAD_STORAGE == "local"
+CHAT_API_BASE_URL = "http://localhost"
+
+CHAT_ORGANISATION_TOKEN = 'your_organisation_token_here'
+
+# Serializer mapping for object types
+OBJECT_TYPE_SERIALIZERS = {
+    # Format:
+    # 1. Model name =Repairs
+    # 2. Key for the serializer = serializer
+    # 3. Path to the serializer (e.g., "app_name.serializers.SerializerName")
+    "Repairs": {
+        "serializer": "repairs.serializers.RepairSerializer",
+    },
+}
+
+CHAT_MODELS = OBJECT_TYPE_SERIALIZERS.keys()
 
 
 
-# Use the client as needed
 ```
 
 ---

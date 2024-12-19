@@ -7,14 +7,12 @@ setup(
     include_package_data=True,
     install_requires=[
 
-       
+
         'Django==4.2.5',
         'djangorestframework==3.14.0',
-        'typing_extensions==4.12.2',
-        "django-storages==1.14.4",
-      
+
     ],
-    description='A reusable Django app for managing storage functionality',
+    description='A reusable Django app for managing chat in django functionality',
 
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

@@ -7,6 +7,7 @@ from chat.serializers import AttachmentResponseSerializer, ChatResponseSerialize
 from chat.serializers import RoomCreateSerializer, AttachmentCreateSerializer
 from chat.serializers import AttachmentPresignedDataeSerializer
 from chat.serializers import ChatRoomCreateSerializer, ParticipantIdsListSerializer
+from chat.serializers import ParticipantEmailsListSerializer
 from chat.serializers import ChatRoomResponseSerializer
 from chat.service import chat_client
 from chat.service import ChatService as chat_service
@@ -124,20 +125,21 @@ class RoomView(BaseFilterParams, BaseView):
             methods=["delete"],
             permission_classes=[IsAuthenticated])
     def delete_room(self, request, pk: UUID = None, *args, **kwargs):
-
         chat = chat_service.get_chat_room(pk)
 
-        participant_id = chat_service.get_chat_client_participant_id(
-            room_id=chat.room_id, user_email=request.user.email
-        )
+        try:
 
-        chat = chat_service.get_chat_room(pk)
+            participant_id = chat_service.get_chat_client_participant_id(
+                room_id=chat.room_id, user_email=request.user.email
+            )
 
-        chat_service.remove_participants(
-            id=chat.id, participant_ids=[request.user.id])
+            chat_client.delete_room(
+                room_id=chat.room_id, participant_id=participant_id)
+            chat_service.remove_participants(
+                id=chat.id, participant_ids=[request.user.id])
 
-        chat_client.delete_room(
-            room_id=chat.room_id, participant_id=participant_id)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -309,6 +311,40 @@ class ParticipantView(BaseFilterParams, viewsets.ViewSet):
 
             added_participants = chat_client.add_participants_by_ids(
                 **query_params, participant_ids=participant_ids)
+
+            serializer = ParticipantSerializer(
+                added_participants["participants"], many=True)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+
+        operation_description="Add Existing  participants to a room",
+        request_body=ParticipantEmailsListSerializer,
+        responses={
+            status.HTTP_200_OK: ParticipantSerializer(many=True)},
+        manual_parameters=[ROOM_ID_QUERY_PARAM]
+    )
+    @action(detail=False,
+            methods=["post"],
+            permission_classes=[IsAuthenticated])
+    def create_participants_by_emails(self, request, *args, **kwargs):
+        allowed_params = ['room_id']
+        query_params = self.filter_query_params(allowed_params)
+
+        try:
+
+            serializer = ParticipantEmailsListSerializer(
+                data=request.data)
+
+            serializer.is_valid(raise_exception=True)
+
+            participant_emails = serializer.data.get('participant_emails')
+
+            added_participants = chat_client.add_participants_by_emails(
+                **query_params, participant_emails=participant_emails)
 
             serializer = ParticipantSerializer(
                 added_participants["participants"], many=True)
