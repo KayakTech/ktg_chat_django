@@ -25,10 +25,7 @@ pip install git+https://github.com/KayakTech/ktg_chat_django.git@branch_name
 pip uninstall ktg_chat_django
 ```
 
-## Usage
-
 ```python
-from ktg_storage.models import Storage
 
 
 
