@@ -8,7 +8,7 @@ from drf_yasg.utils import swagger_serializer_method
 from chat.serializers.base import GET_SERIALIZER_FOR_OBJECT_TYPE
 
 
-class UserSerializer(serializers.ModelSerializer):
+class ChatUserAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
@@ -161,7 +161,7 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
 
 
 class ChatRoomResponseSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer()
+    created_by = ChatUserAccountSerializer()
     object_type_summary = serializers.SerializerMethodField()
     room_details = serializers.SerializerMethodField()
     participant_id = serializers.CharField(required=False)
