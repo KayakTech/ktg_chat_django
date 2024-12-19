@@ -15,14 +15,6 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ['password', 'groups', 'user_permissions']
 
 
-class BaseSerializerMixin(serializers.ModelSerializer):
-    created_by = UserSerializer(read_only=True)
-
-    class Meta:
-        model = None
-        fields = '__all__'
-
-
 class ParticipantSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
     name = serializers.CharField(required=False)
@@ -201,7 +193,8 @@ class ChatRoomResponseSerializer(serializers.ModelSerializer):
         room_details = chat_client.get_room(
             room_id=obj.room_id,
             last_n_messages=last_n_messages,
-            participant_id=participant_id
+            participant_id=participant_id,
+            fetch_only=True
         )
 
         return RoomResponseSerializer(room_details).data
