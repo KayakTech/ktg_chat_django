@@ -233,7 +233,7 @@ class ChatService:
         return participant.get('id')
 
     @classmethod
-    def get_chat_client_room_id(
+    def get_chat_client_id_from_chat_room(
         cls, id: UUID
     ) -> ChatRoom:
 
