@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from chat.models import ChatRoom
-from chat.service import chat_client
+from chat.services import chat_client
+from chat.services import ChatService as chat_service
 from django.contrib.auth import get_user_model
-from chat.service import ChatService as chat_service
+
 from rest_framework.request import Request
 from drf_yasg.utils import swagger_serializer_method
 from chat.serializers.base import GET_SERIALIZER_FOR_OBJECT_TYPE

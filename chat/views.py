@@ -9,8 +9,8 @@ from chat.serializers import AttachmentPresignedDataeSerializer
 from chat.serializers import ChatRoomCreateSerializer, ParticipantIdsListSerializer
 from chat.serializers import ParticipantEmailsListSerializer
 from chat.serializers import ChatRoomResponseSerializer
-from chat.service import chat_client
-from chat.service import ChatService as chat_service
+from chat.services import chat_client
+from chat.services import ChatService as chat_service
 from drf_yasg.utils import swagger_auto_schema
 from chat.api_docs import ROOM_SEARCH_SWAGGER_DOCS, CHAT_SEARCH_SWAGGER_DOCS
 from chat.api_docs import ROOM_ID_QUERY_PARAM, PARTICIPANT_ID_QUERY_PARAM
