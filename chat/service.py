@@ -7,7 +7,7 @@ from chat.chat_sdk.ktg_chat_client import ChatClientConfig, ChatClient
 from django.conf import settings
 from django.db.models import Q
 from uuid import UUID
-
+from chat.model_utils import get_object_type_by_id
 config = ChatClientConfig(settings.CHAT_API_BASE_URL,
                           settings.CHAT_ORGANISATION_TOKEN)
 chat_client = ChatClient(config)
@@ -240,3 +240,7 @@ class ChatService:
         chat = cls.get_chat_room(id)
 
         return chat.room_id or id
+
+    @classmethod
+    def get_object_type_by_id(cls, id: UUID, object_type: str):
+        return get_object_type_by_id(id, object_type)

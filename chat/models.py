@@ -33,4 +33,4 @@ class ChatRoom(models.Model):
     def object_instance(self):
         from chat.model_utils import get_object_type_by_id
 
-        return get_object_type_by_id(self.object_id)
+        return get_object_type_by_id(self.object_id, self.object_type)

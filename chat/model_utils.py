@@ -1,71 +1,25 @@
 import uuid
 import logging
-from typing import Optional, Type
-
-from django.apps import apps
-from django.conf import settings
+from typing import Optional
 from django.db import models
+
+from chat.serializers.base import GET_SERIALIZER_FOR_OBJECT_TYPE
 
 logger = logging.getLogger(__name__)
 
 
-class ModelRetrievalService:
-
-    @classmethod
-    def get_model_by_name(cls, model_name: str) -> Optional[Type[models.Model]]:
-
-        for app_config in apps.get_app_configs():
-            try:
-                model = apps.get_model(app_config.label, model_name)
-                return model
-            except LookupError:
-                continue
-
-        logger.warning(f"Model {model_name} not found in any installed apps")
-        return None
-
-    @classmethod
-    def get_object_by_id(
-        cls,
-        object_id: uuid.UUID,
-        models_to_search: Optional[list[str]] = None,
-        **filters
-    ) -> Optional[models.Model]:
-
-        if models_to_search is None:
-            models_to_search = getattr(settings, 'CHAT_MODELS', [])
-
-        default_filters = {
-            'id': object_id,
-
-        }
-
-        default_filters.update(filters)
-
-        for model_name in models_to_search:
-            try:
-                model_class = cls.get_model_by_name(model_name)
-
-                if not model_class:
-                    continue
-
-                object_type = model_class.objects.filter(
-                    **default_filters).first()
-
-                if object_type:
-                    return object_type
-
-            except Exception as e:
-                logger.error(f"Error searching {model_name}: {e}")
-                continue
-
-        return None
-
-
 def get_object_type_by_id(
     object_id: uuid.UUID,
+    object_type: str,
     *args,
     **kwargs
 ) -> Optional[models.Model]:
 
-    return ModelRetrievalService.get_object_by_id(object_id, *args, **kwargs)
+    serializer_class = GET_SERIALIZER_FOR_OBJECT_TYPE(object_type)
+
+    model: models = serializer_class.Meta.model
+    if not model:
+        logger.error(f"failed to get model for {object_type}")
+        return
+
+    return model.objects.filter(id=object_id).first()
