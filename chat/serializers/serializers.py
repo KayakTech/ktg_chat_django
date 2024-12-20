@@ -57,7 +57,8 @@ class RoomCreateSerializer(serializers.Serializer):
         if self.instance is None:
             if len(value) < 2:
                 raise serializers.ValidationError(
-                    "At least two participants must be provided.")
+                    code="invalid_participant",
+                    detail="At least two participants must be provided.")
             return value
 
 
