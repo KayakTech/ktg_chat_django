@@ -202,7 +202,7 @@ class ChatRoomResponseSerializer(serializers.ModelSerializer):
 
     def get_object_type_summary(self, obj: ChatRoom):
 
-        serializer_class = GET_SERIALIZER_FOR_OBJECT_TYPE(obj.object_type_name)
+        serializer_class = GET_SERIALIZER_FOR_OBJECT_TYPE(obj.object_type)
 
         if not obj.object_instance or not serializer_class:
             return {}

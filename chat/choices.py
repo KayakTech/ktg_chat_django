@@ -11,3 +11,12 @@ class OBJECT_TYPE:
             (model, model.capitalize())
             for model in cls.ALL
         ]
+
+    @classmethod
+    def get_exact_key(cls, object_type: str):
+        for model in settings.CHAT_MODELS:
+
+            if model.lower() == object_type.lower():
+
+                return model
+        return None

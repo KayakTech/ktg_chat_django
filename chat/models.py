@@ -34,9 +34,3 @@ class ChatRoom(models.Model):
         from chat.model_utils import get_object_type_by_id
 
         return get_object_type_by_id(self.object_id)
-
-    @property
-    def object_type_name(self):
-        if not self.object_type:
-            return
-        return self.object_type.capitalize()
