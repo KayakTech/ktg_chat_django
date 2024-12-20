@@ -17,7 +17,7 @@ def get_object_type_by_id(
 
     serializer_class = GET_SERIALIZER_FOR_OBJECT_TYPE(object_type)
 
-    model: models = serializer_class.Meta.model
+    model: models.Model = serializer_class.Meta.model
     if not model:
         logger.error(f"failed to get model for {object_type}")
         return
