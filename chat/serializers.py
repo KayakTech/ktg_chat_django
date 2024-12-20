@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework.request import Request
 from drf_yasg.utils import swagger_serializer_method
-from chat.serializers.base import GET_SERIALIZER_FOR_OBJECT_TYPE
+from chat.model_utils import GET_SERIALIZER_FOR_OBJECT_TYPE
 
 
 class ChatUserAccountSerializer(serializers.ModelSerializer):
