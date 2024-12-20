@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from chat.models import ChatRoom
-from chat.services import chat_client
-from chat.services import ChatService as chat_service
+from chat.services import chat_service
 from django.contrib.auth import get_user_model
 
 from rest_framework.request import Request
@@ -193,7 +192,7 @@ class ChatRoomResponseSerializer(serializers.ModelSerializer):
 
         self.fields['participant_id'].default = participant_id
 
-        room_details = chat_client.get_room(
+        room_details = chat_service.chat_client.get_room(
             room_id=obj.room_id,
             last_n_messages=last_n_messages,
             participant_id=participant_id,

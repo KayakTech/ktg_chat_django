@@ -9,8 +9,7 @@ from chat.serializers import AttachmentPresignedDataeSerializer
 from chat.serializers import ChatRoomCreateSerializer, ParticipantIdsListSerializer
 from chat.serializers import ParticipantEmailsListSerializer
 from chat.serializers import ChatRoomResponseSerializer
-from chat.services import chat_client
-from chat.services import ChatService as chat_service
+from chat.services import chat_service
 from drf_yasg.utils import swagger_auto_schema
 from chat.api_docs import ROOM_SEARCH_SWAGGER_DOCS, CHAT_SEARCH_SWAGGER_DOCS
 from chat.api_docs import ROOM_ID_QUERY_PARAM, PARTICIPANT_ID_QUERY_PARAM
@@ -133,7 +132,7 @@ class RoomView(BaseFilterParams, BaseView):
                 room_id=chat.room_id, user_email=request.user.email
             )
 
-            chat_client.delete_room(
+            chat_service.chat_client.delete_room(
                 room_id=chat.room_id, participant_id=participant_id)
             chat_service.remove_participants(
                 id=chat.id, participant_ids=[request.user.id])
@@ -180,7 +179,7 @@ class ChatView(BaseFilterParams, viewsets.ViewSet):
 
         try:
             chat_data = serializer.data
-            created_chat = chat_client.create_chat(chat_data)
+            created_chat = chat_service.chat_client.create_chat(chat_data)
             serializer = ChatResponseSerializer(created_chat)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -200,7 +199,7 @@ class ChatView(BaseFilterParams, viewsets.ViewSet):
         allowed_params = ['room_id', 'participant_id']
         query_params = self.filter_query_params(allowed_params)
 
-        chats = chat_client.get_chats_in_room(**query_params)
+        chats = chat_service.chat_client.get_chats_in_room(**query_params)
         serializer = ChatResponseSerializer(chats["items"], many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -212,7 +211,7 @@ class ChatView(BaseFilterParams, viewsets.ViewSet):
             methods=["get"],  permission_classes=[IsAuthenticated])
     def get_chat(self, request, pk: UUID = None, *args, **kwargs):
 
-        chat = chat_client.get_chat(id=pk, )
+        chat = chat_service.chat_client.get_chat(id=pk, )
         serializer = ChatResponseSerializer(chat)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -229,7 +228,8 @@ class ChatView(BaseFilterParams, viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
 
         chat_data = serializer.data
-        updated_chat = chat_client.update_chat(id=pk, data=chat_data)
+        updated_chat = chat_service.chat_client.update_chat(
+            id=pk, data=chat_data)
         serializer = ChatResponseSerializer(updated_chat)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -239,7 +239,7 @@ class ChatView(BaseFilterParams, viewsets.ViewSet):
     def delete_chat(self, request, pk: UUID, *args, **kwargs):
 
         try:
-            chat_client.delete_chat(pk)
+            chat_service.chat_client.delete_chat(pk)
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -256,7 +256,7 @@ class ChatView(BaseFilterParams, viewsets.ViewSet):
 
         try:
 
-            result = chat_client.search_chat(**query_params)
+            result = chat_service.chat_client.search_chat(**query_params)
 
             serializer = ChatResponseSerializer(result['items'], many=True)
 
@@ -280,7 +280,8 @@ class ParticipantView(BaseFilterParams, viewsets.ViewSet):
     def get_participants(self, request, *args, **kwargs):
         allowed_params = ['room_id']
         query_params = self.filter_query_params(allowed_params)
-        participants = chat_client.get_participants(**query_params)
+        participants = chat_service.chat_client.get_participants(
+            **query_params)
         serializer = ParticipantSerializer(
             participants["items"], many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -309,7 +310,7 @@ class ParticipantView(BaseFilterParams, viewsets.ViewSet):
 
             participant_ids = serializer.data.get('participant_ids')
 
-            added_participants = chat_client.add_participants_by_ids(
+            added_participants = chat_service.chat_client.add_participants_by_ids(
                 **query_params, participant_ids=participant_ids)
 
             serializer = ParticipantSerializer(
@@ -343,7 +344,7 @@ class ParticipantView(BaseFilterParams, viewsets.ViewSet):
 
             participant_emails = serializer.data.get('participant_emails')
 
-            added_participants = chat_client.add_participants_by_emails(
+            added_participants = chat_service.chat_client.add_participants_by_emails(
                 **query_params, participant_emails=participant_emails)
 
             serializer = ParticipantSerializer(
@@ -367,7 +368,7 @@ class ParticipantView(BaseFilterParams, viewsets.ViewSet):
         query_params = self.filter_query_params(allowed_params)
 
         try:
-            removed_participant = chat_client.remove_participant(
+            removed_participant = chat_service.chat_client.remove_participant(
                 **query_params)
 
             return Response(data=removed_participant, status=status.HTTP_204_NO_CONTENT)
@@ -391,7 +392,8 @@ class AttachmentView(BaseFilterParams, viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
 
         attachment_data = serializer.data
-        created_attachment = chat_client.create_attachment(attachment_data)
+        created_attachment = chat_service.chat_client.create_attachment(
+            attachment_data)
 
         return Response(created_attachment, status=status.HTTP_201_CREATED)
 
@@ -410,7 +412,7 @@ class AttachmentView(BaseFilterParams, viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
 
         chat_data = serializer.data
-        updated_chat = chat_client.update_attachment(
+        updated_chat = chat_service.chat_client.update_attachment(
             attachment_id=pk, data=chat_data)
         serializer = AttachmentResponseSerializer(updated_chat)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -425,7 +427,8 @@ class AttachmentView(BaseFilterParams, viewsets.ViewSet):
     def generate_presigned_url(self, request, pk: UUID, *args, **kwargs):
 
         try:
-            attachment = chat_client.generate_presigned_url(attachment_id=pk)
+            attachment = chat_service.chat_client.generate_presigned_url(
+                attachment_id=pk)
             serializer = AttachmentResponseSerializer(attachment)
 
             return Response(data=serializer.data, status=status.HTTP_200_OK)
@@ -437,5 +440,5 @@ class AttachmentView(BaseFilterParams, viewsets.ViewSet):
             permission_classes=[IsAuthenticated])
     def delete_attachment(self, pk: UUID, *args, **kwargs):
 
-        chat_client.delete_attachment(pk)
+        chat_service.chat_client.delete_attachment(pk)
         return Response(status=status.HTTP_204_NO_CONTENT)

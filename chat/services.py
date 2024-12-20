@@ -8,9 +8,6 @@ from django.conf import settings
 from django.db.models import Q
 from uuid import UUID
 from chat.model_utils import get_object_type_by_id
-config = ChatClientConfig(settings.CHAT_API_BASE_URL,
-                          settings.CHAT_ORGANISATION_TOKEN)
-chat_client = ChatClient(config)
 
 
 class ChatValidationError(ValidationError):
@@ -19,22 +16,23 @@ class ChatValidationError(ValidationError):
 
 class ChatService:
 
-    @classmethod
-    def get_participants(cls, participant_ids: List[str]) -> ChatRoom:
+    config = ChatClientConfig(settings.CHAT_API_BASE_URL,
+                              settings.CHAT_ORGANISATION_TOKEN)
+    chat_client = ChatClient(config)
+
+    def get_participants(self, participant_ids: List[str]) -> ChatRoom:
         participants = get_user_model().objects.filter(
             id__in=participant_ids)
 
         return participants
 
-    @classmethod
-    def archived_chats(cls, user) -> ChatRoom:
+    def archived_chats(self, user) -> ChatRoom:
         archived_chats = ChatRoom.objects.filter(
             Q(created_by=user) | Q(participants=user)).distinct()
 
         return archived_chats.filter(is_archived=True)
 
-    @classmethod
-    def create_chat_room(cls, **kwargs) -> ChatRoom:
+    def create_chat_room(self, **kwargs) -> ChatRoom:
 
         created_by = kwargs.pop('created_by')
         original_kwargs = kwargs.copy()
@@ -67,19 +65,18 @@ class ChatService:
 
         chat_room = ChatRoom(**kwargs, created_by=created_by)
 
-        client_chat_room = chat_client.create_room(original_kwargs)
+        client_chat_room = self.chat_client.create_room(original_kwargs)
 
         chat_room.room_id = client_chat_room.get('id', None)
 
         with transaction.atomic():
             chat_room.save()
 
-            cls.get_or_create_participant(chat_room, participants_data)
+            self.get_or_create_participant(chat_room, participants_data)
 
         return chat_room
 
-    @classmethod
-    def get_or_create_participant(cls, chat_room: ChatRoom, participants_data: List[dict]):
+    def get_or_create_participant(self, chat_room: ChatRoom, participants_data: List[dict]):
         created_by = chat_room.created_by
         if created_by and created_by not in chat_room.participants.all():
             chat_room.participants.add(created_by)
@@ -105,8 +102,7 @@ class ChatService:
 
         return user
 
-    @classmethod
-    def get_participant_ids_info_by_ids(cls, participant_ids: List[str], data: dict = None) -> List[Dict[str, str]]:
+    def get_participant_ids_info_by_ids(self, participant_ids: List[str], data: dict = None) -> List[Dict[str, str]]:
 
         users = get_user_model().objects.filter(id__in=participant_ids)
 
@@ -121,14 +117,12 @@ class ChatService:
 
         return users_info
 
-    @classmethod
-    def get_chat_room(cls, id: str) -> ChatRoom:
+    def get_chat_room(self, id: str) -> ChatRoom:
 
         return ChatRoom.objects.filter(id=id).first()
 
-    @classmethod
-    def update_chat_room(cls, id: str, **kwargs) -> ChatRoom:
-        chat = cls.get_chat_room(id)
+    def update_chat_room(self, id: str, **kwargs) -> ChatRoom:
+        chat = self.get_chat_room(id)
 
         update_data = kwargs.get('kwargs', {})
 
@@ -138,40 +132,37 @@ class ChatService:
             setattr(chat, key, value)
 
         if participants:
-            cls.get_or_create_participant(chat, participants)
+            self.get_or_create_participant(chat, participants)
 
         update_data['participants'] = participants
 
         with transaction.atomic():
-            chat_client.update_room(
+            self.chat_client.update_room(
                 room_id=chat.room_id, data=update_data
             )
             chat.save()
 
         return chat
 
-    @classmethod
-    def delete_chat_room(cls, id: str) -> None:
+    def delete_chat_room(self, id: str) -> None:
 
-        chat = cls.get_chat_room(id)
+        chat = self.get_chat_room(id)
         chat.delete()
 
-    @classmethod
-    def add_participants(cls, id: str, participant_ids: List[str]) -> ChatRoom:
+    def add_participants(self, id: str, participant_ids: List[str]) -> ChatRoom:
 
-        chat = cls.get_chat_room(id)
+        chat = self.get_chat_room(id)
 
-        participants = cls.get_participants(participant_ids)
+        participants = self.get_participants(participant_ids)
 
         chat.participants.add(*participants)
         chat.save()
 
         return chat
 
-    @classmethod
     def get_chat_rooms_for_user(
 
-        cls, user, filters: Optional[Dict[str, any]] = None
+        self, user, filters: Optional[Dict[str, any]] = None
     ) -> List['ChatRoom']:
         query = Q(created_by=user) | Q(participants=user)
         query &= Q(is_deleted=False)
@@ -182,12 +173,11 @@ class ChatService:
 
         return ChatRoom.objects.filter(query).distinct()
 
-    @classmethod
-    def remove_participants(cls, id: str, participant_ids: List[str]) -> ChatRoom:
+    def remove_participants(self, id: str, participant_ids: List[str]) -> ChatRoom:
 
-        chat = cls.get_chat_room(id)
+        chat = self.get_chat_room(id)
 
-        participants = cls.get_participants(participant_ids)
+        participants = self.get_participants(participant_ids)
 
         chat.participants.remove(*participants)
         chat.save()
@@ -197,50 +187,48 @@ class ChatService:
 
         return chat
 
-    @classmethod
-    def bulk_add_participants(cls, id: List[str], participant_ids: List[str]) -> None:
+    def bulk_add_participants(self, id: List[str], participant_ids: List[str]) -> None:
 
         chats: ChatRoom = ChatRoom.objects.filter(id__in=id)
-        participants = cls.get_participants(participant_ids)
+        participants = self.get_participants(participant_ids)
 
         for chat in chats:
             chat: ChatRoom
             chat.participants.add(*participants)
         chats.save()
 
-    @classmethod
     def get_chat_client_participant_by_email(
-        cls, room_id: UUID, user_email: str
+        self, room_id: UUID, user_email: str
     ) -> Optional[dict]:
         try:
-            participants = chat_client.get_participants(
+            participants = self.chat_client.get_participants(
                 room_id=room_id, email=user_email).get('items', [])
 
             return next((p for p in participants if p.get('email') == user_email), None)
         except Exception:
             return None
 
-    @classmethod
     def get_chat_client_participant_id(
-        cls, room_id: UUID, user_email: str
+        self, room_id: UUID, user_email: str
     ) -> Optional[dict]:
 
-        participant = cls.get_chat_client_participant_by_email(
+        participant = self.get_chat_client_participant_by_email(
             room_id, user_email)
 
         if not participant:
             return
         return participant.get('id')
 
-    @classmethod
     def get_chat_client_id_from_chat_room(
-        cls, id: UUID
+        self, id: UUID
     ) -> ChatRoom:
 
-        chat = cls.get_chat_room(id)
+        chat = self.get_chat_room(id)
 
         return chat.room_id or id
 
-    @classmethod
-    def get_object_type_by_id(cls, id: UUID, object_type: str):
+    def get_object_type_by_id(self, id: UUID, object_type: str):
         return get_object_type_by_id(id, object_type)
+
+
+chat_service = ChatService()
