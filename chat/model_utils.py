@@ -11,11 +11,12 @@ logger = logging.getLogger(__name__)
 def get_object_type_by_id(
     object_id: uuid.UUID,
     object_type: str,
-    *args,
-    **kwargs
 ) -> Optional[models.Model]:
 
     serializer_class = GET_SERIALIZER_FOR_OBJECT_TYPE(object_type)
+    if not serializer_class:
+        logger.error(f"failed to get serializer_class for {object_type}")
+        return None
 
     model: models.Model = serializer_class.Meta.model
     if not model:
