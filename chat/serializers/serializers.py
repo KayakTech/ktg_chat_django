@@ -150,9 +150,9 @@ class ChatRoomCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_object_id(self, value):
-        from chat.model_utils import get_object_type_by_id
 
-        object_id = get_object_type_by_id(value)
+        object_type = self._kwargs.get('data').get('object_type')
+        object_id = chat_service.get_object_type_by_id(value, object_type)
 
         if not object_id:
             raise serializers.ValidationError(
